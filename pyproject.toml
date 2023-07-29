@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "easy-polish"
+version = "0.1.0"
+description = "easy-polish to anki"
+authors = ["samm81 <samwmaynard@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">= 3.10"
+numpy = "~1"
+opencv-python = "~4"
+pytesseract = "~0"
+scikit-image = "~0"
+youtube_dl = { git = "https://github.com/ytdl-org/youtube-dl.git", branch = "master" }
+pillow = "~10"
+brain-brew = "~0.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "~23"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

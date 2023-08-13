@@ -21,12 +21,15 @@ ENV HOME="/app"
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
       ffmpeg tesseract-ocr tesseract-ocr-pol \
+      vim \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml poetry.lock ./
 
-RUN poetry config virtualenvs.create false \
-    && poetry lock \
-    && poetry install --no-interaction --no-ansi
+# TODO solve the `root` issue
+RUN su 1000 \
+      poetry config virtualenvs.create false \
+        && poetry lock \
+        && poetry install --no-interaction --no-ansi
 
 ENTRYPOINT ["bash"]

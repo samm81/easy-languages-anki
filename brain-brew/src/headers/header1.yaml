@@ -1,0 +1,61 @@
+crowdanki_uuid: 5df1edcc-2fe7-11ee-8776-902e168a0926
+deck_config_uuid: b2ec1e01-2fe7-11ee-ad0f-902e168a0926
+deck_configurations:
+- __type__: DeckConfig
+  autoplay: true
+  buryInterdayLearning: false
+  crowdanki_uuid: b2ec1e01-2fe7-11ee-ad0f-902e168a0926
+  dyn: false
+  interdayLearningMix: 0
+  lapse:
+    delays:
+    - 10.0
+    leechAction: 0
+    leechFails: 8
+    minInt: 1
+    mult: 0.3
+  maxTaken: 60
+  name: default
+  new:
+    bury: false
+    delays:
+    - 1.0
+    - 10.0
+    initialFactor: 2500
+    ints:
+    - 1
+    - 4
+    - 0
+    order: 1
+    perDay: 4
+    separate: true
+  newGatherPriority: 0
+  newMix: 0
+  newPerDayMinimum: 0
+  newSortOrder: 0
+  reminder:
+    enabled: true
+    time:
+    - 22
+    - 0
+  replayq: true
+  rev:
+    bury: true
+    ease4: 1.3
+    fuzz: 0.05
+    hardFactor: 1.2
+    ivlFct: 1.0
+    maxIvl: 36500
+    minSpace: 1
+    perDay: 9999
+  reviewOrder: 0
+  timer: 0
+desc: ''
+dyn: 0
+extendNew: 0
+extendRev: 0
+name: easy-polish
+newLimit: null
+newLimitToday: null
+reviewLimit: null
+reviewLimitToday: null

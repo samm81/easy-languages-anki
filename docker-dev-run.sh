@@ -12,7 +12,7 @@ docker run \
   --interactive --tty \
   --rm \
   --user "$(id -u):$(id -g)" \
-  -v "$(pwd):/app" \
-  -v "${HOME}/xorkspace/${dirname}:/app/vids" \
+  -v "$(pwd):/app/src" \
+  -v "${HOME}/xorkspace/${dirname}:/vids" \
   "$IMAGE_NAME" \
   "$@"

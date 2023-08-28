@@ -24,7 +24,7 @@
         source: src/media/
         recursive: true
 - generate_crowd_anki:
-    folder: build/easy-polish/
+    folder: build/pol__easy-polish/
     notes:
       part_id: deck_notes
     note_models:

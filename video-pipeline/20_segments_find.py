@@ -47,7 +47,7 @@ SegmentGenerator = Generator[Segment, None, None]
 
 
 def segment_finder(
-    frame_generator: FramePairGenerator, similarity_cutoff: float
+    frame_generator: FramePairGenerator, caption_video_similarity_cutoff: float
 ) -> SegmentGenerator:
     segment_start: int = 0
     for frame_prev, frame, frame_num in frame_generator:
@@ -60,7 +60,7 @@ def segment_finder(
             full=True,
         )
 
-        if score < similarity_cutoff:
+        if score < caption_video_similarity_cutoff:
             yield (segment_start, frame_num - 1, score, frame_prev_subtitle_region)
             segment_start = frame_num
 
@@ -90,7 +90,7 @@ SegmentWithTextsGenerator = Generator[SegmentWithTexts, None, None]
 
 def segments_join_on_text(
     segments: SegmentWithTextGenerator,
-    caption_similarity_cutoff: int,
+    caption_text_similarity_cutoff: int,
 ) -> SegmentWithTextsGenerator:
     segment_start_start, segment_start_end, segment_start_text = next(segments)
     segment_prev: SegmentWithTexts = (
@@ -105,7 +105,7 @@ def segments_join_on_text(
         segment_start, segment_end, segment_text = segment
         if any(
             levenshtein_similarity(segment_prev_text, segment_text)
-            > caption_similarity_cutoff
+            > caption_text_similarity_cutoff
             for segment_prev_text in segment_prev_texts
         ):
             segments_merged = (
@@ -175,8 +175,8 @@ def csv_rowwriter(filename, mode):
 
 def main(
     video_path: str,
-    similarity_cutoff: float,
-    caption_similarity_cutoff: int,
+    caption_video_similarity_cutoff: float,
+    caption_text_similarity_cutoff: int,
     outfile: str,
 ) -> None:
     video: cv2.VideoCapture = cv2.VideoCapture(video_path)
@@ -185,12 +185,14 @@ def main(
 
     frame_gen: FrameGenerator = frame_generator(video)
     frame_pair_gen: FramePairGenerator = frame_pair_generator(frame_gen)
-    segments_gen: SegmentGenerator = segment_finder(frame_pair_gen, similarity_cutoff)
+    segments_gen: SegmentGenerator = segment_finder(
+        frame_pair_gen, caption_video_similarity_cutoff
+    )
     segments_with_text: SegmentWithTextGenerator = segments_add_text_generator(
         segments_gen
     )
     segments_joined_text: SegmentWithTextsGenerator = segments_join_on_text(
-        segments_with_text, caption_similarity_cutoff
+        segments_with_text, caption_text_similarity_cutoff
     )
     segments_has_text: SegmentWithTextsGenerator = (
         (start, end, texts)
@@ -217,10 +219,10 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="find segments in easy-polish video")
+    parser = argparse.ArgumentParser(description="find segments in easy-language video")
     parser.add_argument("video_path", type=str, help="path to the video file")
     parser.add_argument(
-        "--similarity-cutoff",
+        "--caption-video-similarity-cutoff",
         type=float,
         default=0.97,
         help=(
@@ -229,7 +231,7 @@ if __name__ == "__main__":
         ),
     )
     parser.add_argument(
-        "--caption-similarity-cutoff",
+        "--caption-text-similarity-cutoff",
         type=float,
         default=0.7,
         help=(
@@ -241,7 +243,7 @@ if __name__ == "__main__":
         "--outfile",
         "-o",
         type=str,
-        default="20_segments.csv",
+        default="segments_raw.csv",
         help="path to the output file",
     )
 
@@ -249,8 +251,8 @@ if __name__ == "__main__":
 
     main(
         args.video_path,
-        args.similarity_cutoff,
-        args.caption_similarity_cutoff,
+        args.caption_video_similarity_cutoff,
+        args.caption_text_similarity_cutoff,
         args.outfile,
     )
 

@@ -4,12 +4,13 @@ import youtube_dl
 from os import path
 
 
-def main(video_id, outdir):
+def main(video_id, videodir):
     url = f"https://www.youtube.com/watch?v={video_id}"
+    indir = path.join(videodir, f"{video_id}/in/")
 
     ydl_opts = {
         "format": "best",
-        "outtmpl": path.join(outdir, f"{video_id}.%(ext)s"),
+        "outtmpl": path.join(indir, "ydl.%(ext)s"),
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
@@ -25,14 +26,14 @@ def main(video_id, outdir):
         "title": video_title,
     }
 
-    with open(path.join(outdir, f"{video_id}.ini"), "w") as configfile:
+    with open(path.join(indir, f"ydl.ini"), "w") as configfile:
         config.write(configfile)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("video_id", help="id of youtube video")
-    parser.add_argument("--outdir", default="/vids")
+    parser.add_argument("videodir", help="dir where videos live")
     args = parser.parse_args()
 
-    main(args.video_id, args.outdir)
+    main(args.video_id, args.videodir)

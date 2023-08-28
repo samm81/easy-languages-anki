@@ -143,8 +143,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="clean found segments")
     parser.add_argument("video_path", type=str, help="path to the video file")
     parser.add_argument("video_ini_path", type=str, help="path to the video ini file")
-    parser.add_argument("--infile", "-i", type=str, default="30_segments_cleaned.csv")
-    parser.add_argument("--outfile", "-o", type=str, default="40_anki_cards.csv")
+    parser.add_argument("--infile", "-i", type=str, default="segments_cleaned.csv")
+    parser.add_argument("--outfile", "-o", type=str, default="anki_cards.csv")
     args = parser.parse_args()
 
     main(args.video_path, args.video_ini_path, args.infile, args.outfile)

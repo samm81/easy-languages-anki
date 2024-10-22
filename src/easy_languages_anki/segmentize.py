@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import argparse
 import csv
 from contextlib import contextmanager
 from collections.abc import Generator, Iterator
@@ -10,8 +9,8 @@ from PIL import Image
 from skimage.metrics import structural_similarity as ssim
 from tqdm import tqdm
 
-from imagetotext import video_frame_extract_text
-from segment import SegmentRawText
+from . import config, imagetotext
+from .segment import SegmentRawText
 
 Frame = np.ndarray
 
@@ -77,7 +76,7 @@ def segments_add_text_generator(
 ) -> Iterator[SegmentWithText]:
     for segment_start, segment_end, _score, subtitle_region in segments:
         image = Image.fromarray(np.uint8(subtitle_region))
-        text = video_frame_extract_text(image, lang)
+        text = imagetotext.video_frame_extract_text(image, lang)
         yield (segment_start, segment_end, str(text))
 
 
@@ -86,7 +85,7 @@ SegmentWithTexts = tuple[int, int, set[str]]
 
 def segments_join_on_text(
     segments: Iterator[SegmentWithText],
-    caption_text_similarity_cutoff: int,
+    caption_text_similarity_cutoff: float,
 ) -> Iterator[SegmentWithTexts]:
     segment_start_start, segment_start_end, segment_start_text = next(segments)
     segment_prev: SegmentWithTexts = (
@@ -169,12 +168,12 @@ def csv_rowwriter(filename, mode):
         yield csv.writer(f).writerow
 
 
-def main(
+def segmentize(
     video_path: str,
     lang: str,
-    caption_video_similarity_cutoff: float,
-    caption_text_similarity_cutoff: int,
     outfile: str,
+    caption_video_similarity_cutoff: float = config.SEGMENTIZE_CAPTION_VIDEO_SIMILARITY_CUTOFF_DEFAULT,
+    caption_text_similarity_cutoff: float = config.SEGMENTIZE_CAPTION_TEXT_SIMILARITY_CUTOFF_DEFAULT,
 ) -> None:
     video: cv2.VideoCapture = cv2.VideoCapture(video_path)
 
@@ -217,49 +216,3 @@ def main(
         segment = SegmentRawText(str(segment_start_frame), str(segment_end_frame), text)
         with csv_rowwriter(outfile, "a") as writerow:
             writerow(segment)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="find segments in easy-language video")
-    parser.add_argument("video_path", type=str, help="path to the video file")
-    parser.add_argument("language", type=str, help="language to do ocr with")
-    parser.add_argument(
-        "--caption-video-similarity-cutoff",
-        type=float,
-        default=0.97,
-        help=(
-            "value between -1 and 1 below which the scene is considered to be changed"
-            " (-1 means total dissimilarity and 1 means they're identical)"
-        ),
-    )
-    parser.add_argument(
-        "--caption-text-similarity-cutoff",
-        type=float,
-        default=0.7,
-        help=(
-            "minumum levenshtein similarity between captions to be considered the same"
-            " (0 means total dissimilarity and 1 means they're identical)"
-        ),
-    )
-    parser.add_argument(
-        "--outfile",
-        "-o",
-        type=str,
-        default="20_segments_raw.csv",
-        help="path to the output file",
-    )
-
-    args = parser.parse_args()
-
-    # easy-language videos translations are always english
-    language = f"{args.language}+eng"
-
-    main(
-        args.video_path,
-        language,
-        args.caption_video_similarity_cutoff,
-        args.caption_text_similarity_cutoff,
-        args.outfile,
-    )
-
-    print("done!")

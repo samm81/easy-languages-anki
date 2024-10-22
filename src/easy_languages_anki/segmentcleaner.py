@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 import csv
 from contextlib import contextmanager
-import argparse
-from typing import Callable, Iterable
+from collections.abc import Iterable, Callable
 
-from segment import SegmentRawText, Segment
-from editor import drop_user_into_editor
+from .segment import SegmentRawText, Segment
+from .editor import drop_user_into_editor
 
 
 @contextmanager
@@ -115,7 +114,7 @@ def segment_raw_handle_non_interactive(
         print(f"[warn] dropping invalid segment: {segment}")
 
 
-def main(input_file, output_file, interactive, start_frame):
+def clean_interactively(input_file, output_file, start_frame):
     segments_raw = segments_raw_from_csv(input_file)
     segments_raw = (
         segment_raw
@@ -131,32 +130,27 @@ def main(input_file, output_file, interactive, start_frame):
         with csv_rowwriter(output_file, "a") as writerow:
             writerow(segment)
 
-    if interactive:
-        # bug where if first segment is dropped, the no-op save handler is replaced
-        segment_prev = segment_raw_handle_interactive(
-            Segment("0", "0", "", ""), next(segments_raw), lambda _: None
-        )
-        for segment_raw in segments_raw:
-            segment_prev = segment_raw_handle_interactive(
-                segment_prev, segment_raw, segment_save
-            )
-
-        segment_save(segment_prev)
-    else:
-        for segment_raw in segments_raw:
-            segment_raw_handle_non_interactive(segment_raw, segment_save)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="clean found segments")
-    parser.add_argument("--infile", "-i", type=str, default="20_segments_raw.csv")
-    parser.add_argument("--outfile", "-o", type=str, default="40_segments_cleaned.csv")
-    parser.add_argument(
-        "--interactive", type=bool, default=False, action=argparse.BooleanOptionalAction
+    # bug where if first segment is dropped, the no-op save handler is replaced
+    segment_prev = segment_raw_handle_interactive(
+        Segment("0", "0", "", ""), next(segments_raw), lambda _: None
     )
-    parser.add_argument("--start-frame", type=int, default=0)
-    args = parser.parse_args()
+    for segment_raw in segments_raw:
+        segment_prev = segment_raw_handle_interactive(
+            segment_prev, segment_raw, segment_save
+        )
 
-    main(args.infile, args.outfile, args.interactive, args.start_frame)
+    segment_save(segment_prev)
 
-    print("done!")
+
+def clean(input_file, output_file):
+    segments_raw = segments_raw_from_csv(input_file)
+
+    with csv_rowwriter(output_file, "w") as writerow:
+        writerow(Segment._fields)
+
+    def segment_save(segment: Segment) -> None:
+        with csv_rowwriter(output_file, "a") as writerow:
+            writerow(segment)
+
+    for segment_raw in segments_raw:
+        segment_raw_handle_non_interactive(segment_raw, segment_save)

@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
 import csv
 from contextlib import contextmanager
 import argparse
-from typing import Generator, Callable, Iterable
+from typing import Callable, Iterable
 
 from segment import SegmentRawText, Segment
 from editor import drop_user_into_editor
@@ -28,13 +29,13 @@ def segments_raw_from_csv(filename) -> Iterable[SegmentRawText]:
 def merge_segments(
     segment_prev: Segment, curr_segment: SegmentRawText
 ) -> SegmentRawText:
-    prev_polish, prev_english = segment_prev.polish, segment_prev.english
-    edit_text = f"{prev_polish}\n{prev_english}\n{curr_segment.text}"
+    prev_learning, prev_english = segment_prev.learning, segment_prev.english
+    edit_text = f"{prev_learning}\n{prev_english}\n{curr_segment.text}"
 
-    curr_polish_english = curr_segment.text.split("\n")
-    if len(curr_polish_english) == 2:
-        curr_polish, curr_english = curr_polish_english
-        edit_text = f"{prev_polish}\n{curr_polish}\n{prev_english}\n{curr_english}"
+    curr_learning_english = curr_segment.text.split("\n")
+    if len(curr_learning_english) == 2:
+        curr_learning, curr_english = curr_learning_english
+        edit_text = f"{prev_learning}\n{curr_learning}\n{prev_english}\n{curr_english}"
 
     return SegmentRawText(segment_prev.start_frame, curr_segment.end_frame, edit_text)
 
@@ -43,7 +44,7 @@ def fixup_segments(segment_prev: Segment, curr_segment: SegmentRawText) -> Segme
     return Segment(
         segment_prev.start_frame,
         curr_segment.end_frame,
-        segment_prev.polish,
+        segment_prev.learning,
         segment_prev.english,
     )
 
@@ -56,23 +57,24 @@ def edit_segment_raw(segment: SegmentRawText) -> SegmentRawText:
 
 def segment_raw_text_to_segment(segment_raw: SegmentRawText) -> Segment:
     start_frame, end_frame, text = segment_raw
-    polish_english = text.split("\n")
-    if len(polish_english) != 2:
-        raise ValueError("expected polish and english separated by newline")
-    polish, english = polish_english
-    return Segment(start_frame, end_frame, polish, english)
+    if not segment_raw_is_valid(segment_raw):
+        raise ValueError("expected learning and english separated by newline")
+    learning, english = text.split("\n")
+    return Segment(start_frame, end_frame, learning, english)
 
 
-def segment_raw_handle(
+def segment_raw_is_valid(segment: SegmentRawText) -> bool:
+    return len(segment.text.split("\n")) == 2
+
+
+def segment_raw_handle_interactive(
     segment_prev: Segment,
     segment_curr: SegmentRawText,
     segment_save: Callable[[Segment], None],
 ) -> Segment:
     print(segment_curr)
 
-    start_frame, end_frame, text = segment_curr
-    polish_english = text.split("\n")
-    if len(polish_english) != 2:
+    if not segment_raw_is_valid(segment_curr):
         command = input("[e]dit (default), [m]erge, [f]ixup, [d]r[o]p ? ").lower()
         command = "e" if command == "" else command
     else:
@@ -103,7 +105,17 @@ def segment_raw_handle(
     raise ValueError(f"unknown command: {command}")
 
 
-def main(input_file, output_file, non_interactive, start_frame):
+def segment_raw_handle_non_interactive(
+    segment: SegmentRawText,
+    segment_save: Callable[[Segment], None],
+) -> None:
+    if segment_raw_is_valid(segment):
+        segment_save(segment_raw_text_to_segment(segment))
+    else:
+        print(f"[warn] dropping invalid segment: {segment}")
+
+
+def main(input_file, output_file, interactive, start_frame):
     segments_raw = segments_raw_from_csv(input_file)
     segments_raw = (
         segment_raw
@@ -119,27 +131,32 @@ def main(input_file, output_file, non_interactive, start_frame):
         with csv_rowwriter(output_file, "a") as writerow:
             writerow(segment)
 
-    if non_interactive:
-        raise NotImplementedError("`non_interactive` mode not implemented yet")
+    if interactive:
+        # bug where if first segment is dropped, the no-op save handler is replaced
+        segment_prev = segment_raw_handle_interactive(
+            Segment("0", "0", "", ""), next(segments_raw), lambda _: None
+        )
+        for segment_raw in segments_raw:
+            segment_prev = segment_raw_handle_interactive(
+                segment_prev, segment_raw, segment_save
+            )
 
-    # bug where if first segment is dropped, the no-op save handler is replaced
-    segment_prev = segment_raw_handle(
-        Segment(0, 0, "", ""), next(segments_raw), lambda _: None
-    )
-    for segment_raw in segments_raw:
-        segment_prev = segment_raw_handle(segment_prev, segment_raw, segment_save)
-
-    segment_save(segment_prev)
+        segment_save(segment_prev)
+    else:
+        for segment_raw in segments_raw:
+            segment_raw_handle_non_interactive(segment_raw, segment_save)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="clean found segments")
-    parser.add_argument("--infile", "-i", type=str, default="20_segments.csv")
-    parser.add_argument("--outfile", "-o", type=str, default="30_segments_cleaned.csv")
-    parser.add_argument("--non-interactive", type=bool, default=False)
+    parser.add_argument("--infile", "-i", type=str, default="20_segments_raw.csv")
+    parser.add_argument("--outfile", "-o", type=str, default="40_segments_cleaned.csv")
+    parser.add_argument(
+        "--interactive", type=bool, default=False, action=argparse.BooleanOptionalAction
+    )
     parser.add_argument("--start-frame", type=int, default=0)
     args = parser.parse_args()
 
-    main(args.infile, args.outfile, args.non_interactive, args.start_frame)
+    main(args.infile, args.outfile, args.interactive, args.start_frame)
 
     print("done!")

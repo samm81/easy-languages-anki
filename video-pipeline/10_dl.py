@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import configparser
 import youtube_dl
@@ -14,6 +15,8 @@ def main(video_id, videodir):
     }
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
+        if not info:
+            raise ValueError("`youtube-dl` returned no info")
         video_title = info.get("title")
 
     if not video_title:
@@ -26,7 +29,7 @@ def main(video_id, videodir):
         "title": video_title,
     }
 
-    with open(path.join(indir, f"ydl.ini"), "w") as configfile:
+    with open(path.join(indir, "ydl.ini"), "w") as configfile:
         config.write(configfile)
 
 

@@ -1,12 +1,23 @@
+#!/usr/bin/env python3
 from contextlib import contextmanager
-from typing import Iterable
 import argparse
 import csv
 import os
 import subprocess
 import configparser
 
-from segment import Segment, AnkiCardReqs, AnkiCard
+import cv2
+from tqdm import tqdm
+
+from segment import (
+    Segment,
+    AnkiVideoFullCardReqs,
+    AnkiVideoFullCard,
+    AnkiVideoFrameCardReqs,
+    AnkiVideoFrameCard,
+)
+
+FPS = 30
 
 
 @contextmanager
@@ -23,12 +34,29 @@ def csv_rows(filename):
         yield from reader
 
 
-def segments_from_csv(filename) -> Iterable[Segment]:
-    return map(Segment._make, csv_rows(filename))
+def segments_from_csv(filename) -> list[Segment]:
+    return [Segment._make(row) for row in csv_rows(filename)]
 
 
 def timestamp_format(timestamp: float):
     return f"{timestamp:07.2f}".replace(".", "_")
+
+
+def outfile_path_and_name(
+    video_path: str,
+    video_id: str,
+    segment_start_timestamp: float,
+    segment_end_timestamp: float,
+    extension: str,
+) -> tuple[str, str]:
+    segment_start_timestamp_str = timestamp_format(segment_start_timestamp)
+    segment_end_timestamp_str = timestamp_format(segment_end_timestamp)
+    outfile_name = f"{video_id}-{segment_start_timestamp_str}-{segment_end_timestamp_str}.{extension}"
+
+    video_dirname = os.path.dirname(video_path)
+    outfile = os.path.join(video_dirname, outfile_name)
+
+    return outfile, outfile_name
 
 
 def segment_video(
@@ -36,14 +64,10 @@ def segment_video(
     video_id: str,
     segment_start_timestamp: float,
     segment_end_timestamp: float,
-):
-    video_dirname = os.path.dirname(video_path)
-    segment_start_timestamp_str = timestamp_format(segment_start_timestamp)
-    segment_end_timestamp_str = timestamp_format(segment_end_timestamp)
-    outfile_name = (
-        f"{video_id}-{segment_start_timestamp_str}-{segment_end_timestamp_str}.webm"
+) -> str:
+    outfile, outfile_name = outfile_path_and_name(
+        video_path, video_id, segment_start_timestamp, segment_end_timestamp, "webm"
     )
-    outfile = os.path.join(video_dirname, outfile_name)
 
     subprocess.call(
         [
@@ -72,14 +96,67 @@ def segment_video(
     return outfile_name
 
 
-def segment_to_anki_card_reqs(
+def segment_audio(
+    video_path: str,
+    video_id: str,
+    segment_start_timestamp: float,
+    segment_end_timestamp: float,
+) -> str:
+    outfile, outfile_name = outfile_path_and_name(
+        video_path, video_id, segment_start_timestamp, segment_end_timestamp, "aac"
+    )
+
+    subprocess.call(
+        [
+            "ffmpeg",
+            "-loglevel",
+            "error",
+            "-y",  # overwrite output file
+            "-i",
+            video_path,
+            "-ss",  # start
+            str(segment_start_timestamp),
+            "-to",  # to
+            str(segment_end_timestamp),
+            "-vn",  # no video
+            "-acodec",
+            "copy",  # copy audio without re-encoding
+            outfile,
+        ]
+    )
+
+    return outfile_name
+
+
+def segment_frame(
+    video: cv2.VideoCapture,
+    frame_number: int,
+    video_path: str,
+    video_id: str,
+    segment_start_timestamp: float,
+    segment_end_timestamp: float,
+) -> str:
+    video.set(cv2.CAP_PROP_POS_FRAMES, frame_number - 1)
+    ret, image = video.read()
+
+    if not ret:
+        raise RuntimeError(f"could not read frame {frame_number}")
+
+    outfile, outfile_name = outfile_path_and_name(
+        video_path, video_id, segment_start_timestamp, segment_end_timestamp, "jpg"
+    )
+
+    cv2.imwrite(outfile, image)
+
+    return outfile_name
+
+
+def segment_to_anki_video_full_card_reqs(
     segment: Segment, video_path: str, video_id: str, video_title: str, video_url: str
-) -> AnkiCardReqs:
-    start_frame, end_frame, polish, english = segment
+) -> AnkiVideoFullCardReqs:
+    start_frame, end_frame, learning, english = segment
 
-    fps = 30
-
-    start_timestamp, end_timestamp = int(start_frame) / fps, int(end_frame) / fps
+    start_timestamp, end_timestamp = int(start_frame) / FPS, int(end_frame) / FPS
 
     video_name = segment_video(
         video_path,
@@ -88,8 +165,8 @@ def segment_to_anki_card_reqs(
         end_timestamp,
     )
 
-    return AnkiCardReqs(
-        polish=polish,
+    return AnkiVideoFullCardReqs(
+        learning=learning,
         english=english,
         video=video_name,
         video_title=video_title,
@@ -97,42 +174,120 @@ def segment_to_anki_card_reqs(
     )
 
 
-def anki_card_reqs_to_anki_cards(anki_card_reqs: AnkiCardReqs) -> AnkiCard:
-    polish, english, video, video_title, video_url = anki_card_reqs
+def anki_video_full_card_reqs_to_anki_video_full_cards(
+    anki_card_reqs: AnkiVideoFullCardReqs,
+) -> AnkiVideoFullCard:
+    learning, english, video, video_title, video_url = anki_card_reqs
 
-    return AnkiCard(
+    return AnkiVideoFullCard(
         guid="",
-        polish=polish,
+        learning=learning,
         english=english,
         video=video,
         video_media_anchor=f"[sound:{video}]",
         video_title=video_title,
         video_url=video_url,
         cloze_listen_hack="{{c1::}}",
-        priority=len(f"{polish} {english}"),
+        priority=str(len(f"{learning} {english}")),
         tags="",
     )
 
 
-def main(video_path, video_ini_path, input_file, output_file):
+def segment_to_anki_video_frame_card_reqs(
+    segment: Segment,
+    video: cv2.VideoCapture,
+    video_path: str,
+    video_id: str,
+    video_title: str,
+    video_url: str,
+) -> AnkiVideoFrameCardReqs:
+    start_frame, end_frame, learning, english = segment
+
+    start_timestamp, end_timestamp = int(start_frame) / FPS, int(end_frame) / FPS
+
+    audio_name = segment_audio(
+        video_path,
+        video_id,
+        start_timestamp,
+        end_timestamp,
+    )
+
+    mid_frame = (int(start_frame) + int(end_frame)) // 2
+    frame_name = segment_frame(
+        video, mid_frame, video_path, video_id, start_timestamp, end_timestamp
+    )
+
+    return AnkiVideoFrameCardReqs(
+        learning=learning,
+        english=english,
+        audio=audio_name,
+        frame=frame_name,
+        video_title=video_title,
+        video_url=video_url,
+    )
+
+
+def anki_video_frame_card_reqs_to_anki_video_frame_cards(
+    anki_card_reqs: AnkiVideoFrameCardReqs,
+) -> AnkiVideoFrameCard:
+    learning, english, audio, frame, video_title, video_url = anki_card_reqs
+
+    return AnkiVideoFrameCard(
+        guid="",
+        learning=learning,
+        english=english,
+        audio=audio,
+        frame=frame,
+        video_title=video_title,
+        video_url=video_url,
+        tags="",
+    )
+
+
+def main(
+    video_path: str,
+    video_ini_path: str,
+    use_full_video: bool,
+    input_file: str,
+    output_file: str,
+):
     config = configparser.ConfigParser()
     config.read(video_ini_path)
     video_id = config["video"]["id"]
     video_title = config["video"]["title"]
     video_url = config["video"]["url"]
 
-    segments = segments_from_csv(input_file)
-    anki_card_reqs = (
-        segment_to_anki_card_reqs(segment, video_path, video_id, video_title, video_url)
-        for segment in segments
-    )
-    anki_cards = (
-        anki_card_reqs_to_anki_cards(anki_card_reqs)
-        for anki_card_reqs in anki_card_reqs
-    )
+    segments = tqdm(segments_from_csv(input_file), unit="segment")
 
-    with csv_rowwriter(output_file, "w") as writerow:
-        writerow(AnkiCard._fields)
+    if use_full_video:
+        anki_card_reqs = (
+            segment_to_anki_video_full_card_reqs(
+                segment, video_path, video_id, video_title, video_url
+            )
+            for segment in segments
+        )
+        anki_cards = (
+            anki_video_full_card_reqs_to_anki_video_full_cards(anki_card_reqs)
+            for anki_card_reqs in anki_card_reqs
+        )
+
+        with csv_rowwriter(output_file, "w") as writerow:
+            writerow(AnkiVideoFullCard._fields)
+    else:
+        video = cv2.VideoCapture(video_path)
+        anki_card_reqs = (
+            segment_to_anki_video_frame_card_reqs(
+                segment, video, video_path, video_id, video_title, video_url
+            )
+            for segment in segments
+        )
+        anki_cards = (
+            anki_video_frame_card_reqs_to_anki_video_frame_cards(anki_card_reqs)
+            for anki_card_reqs in anki_card_reqs
+        )
+
+        with csv_rowwriter(output_file, "w") as writerow:
+            writerow(AnkiVideoFrameCard._fields)
 
     for anki_card in anki_cards:
         with csv_rowwriter(output_file, "a") as writerow:
@@ -143,10 +298,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="clean found segments")
     parser.add_argument("video_path", type=str, help="path to the video file")
     parser.add_argument("video_ini_path", type=str, help="path to the video ini file")
-    parser.add_argument("--infile", "-i", type=str, default="segments_cleaned.csv")
-    parser.add_argument("--outfile", "-o", type=str, default="anki_cards.csv")
+    parser.add_argument("--infile", "-i", type=str, default="40_segments_cleaned.csv")
+    parser.add_argument("--outfile", "-o", type=str, default="50_anki_cards.csv")
+    parser.add_argument(
+        "--use-full-video",
+        help="use full video instead of a frame",
+        type=bool,
+        default=False,
+    )
     args = parser.parse_args()
 
-    main(args.video_path, args.video_ini_path, args.infile, args.outfile)
+    main(
+        args.video_path,
+        args.video_ini_path,
+        args.use_full_video,
+        args.infile,
+        args.outfile,
+    )
 
     print("done!")

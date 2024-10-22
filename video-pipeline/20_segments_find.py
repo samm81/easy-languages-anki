@@ -1,26 +1,25 @@
-import cv2
-from skimage.metrics import structural_similarity as ssim
-from typing import Generator, Optional, Tuple
-import numpy as np
+#!/usr/bin/env python3
 import argparse
-import itertools
-import subprocess
-from PIL import Image
-import pytesseract
 import csv
 from contextlib import contextmanager
+from collections.abc import Generator, Iterator
 
+import cv2
+import numpy as np
+from PIL import Image
+from skimage.metrics import structural_similarity as ssim
+from tqdm import tqdm
+
+from imagetotext import video_frame_extract_text
 from segment import SegmentRawText
 
 Frame = np.ndarray
 
-FrameGenerator = Generator[Frame, None, None]
 
-
-def frame_generator(video: cv2.VideoCapture) -> FrameGenerator:
+def frame_generator(video: cv2.VideoCapture) -> Generator[Frame, None, None]:
     while True:
         ret: bool
-        frame_color: Optional[Frame]
+        frame_color: Frame | None
         ret, frame_color = video.read()
         if ret:
             frame_bw = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
@@ -29,26 +28,24 @@ def frame_generator(video: cv2.VideoCapture) -> FrameGenerator:
             break
 
 
-FramePair = Tuple[Frame, Frame, int]
-FramePairGenerator = Generator[FramePair, None, None]
+FramePair = tuple[Frame, Frame, int]
 
 
 def frame_pair_generator(
-    frame_generator: FrameGenerator,
-) -> FramePairGenerator:
+    frame_generator: Iterator[Frame],
+) -> Iterator[FramePair]:
     frame_prev = next(frame_generator)
     for frame_num, frame in enumerate(frame_generator, start=1):
         yield (frame_prev, frame, frame_num)
         frame_prev = frame
 
 
-Segment = Tuple[int, int, float, Frame]
-SegmentGenerator = Generator[Segment, None, None]
+Segment = tuple[int, int, float, Frame]
 
 
 def segment_finder(
-    frame_generator: FramePairGenerator, caption_video_similarity_cutoff: float
-) -> SegmentGenerator:
+    frame_generator: Iterator[FramePair], caption_video_similarity_cutoff: float
+) -> Iterator[Segment]:
     segment_start: int = 0
     for frame_prev, frame, frame_num in frame_generator:
         frame_prev_subtitle_region = extract_subtitle_region(frame_prev)
@@ -71,27 +68,26 @@ def extract_subtitle_region(frame: Frame) -> Frame:
     return subtitle_region
 
 
-SegmentWithText = Tuple[int, int, str]
-SegmentWithTextGenerator = Generator[SegmentWithText, None, None]
+SegmentWithText = tuple[int, int, str]
 
 
 def segments_add_text_generator(
-    segments: SegmentGenerator,
-) -> SegmentWithTextGenerator:
+    segments: Iterator[Segment],
+    lang: str,
+) -> Iterator[SegmentWithText]:
     for segment_start, segment_end, _score, subtitle_region in segments:
         image = Image.fromarray(np.uint8(subtitle_region))
-        text = pytesseract.image_to_string(image, lang="pol").strip()
-        yield (segment_start, segment_end, text)
+        text = video_frame_extract_text(image, lang)
+        yield (segment_start, segment_end, str(text))
 
 
-SegmentWithTexts = Tuple[int, int, set[str]]
-SegmentWithTextsGenerator = Generator[SegmentWithTexts, None, None]
+SegmentWithTexts = tuple[int, int, set[str]]
 
 
 def segments_join_on_text(
-    segments: SegmentWithTextGenerator,
+    segments: Iterator[SegmentWithText],
     caption_text_similarity_cutoff: int,
-) -> SegmentWithTextsGenerator:
+) -> Iterator[SegmentWithTexts]:
     segment_start_start, segment_start_end, segment_start_text = next(segments)
     segment_prev: SegmentWithTexts = (
         segment_start_start,
@@ -175,36 +171,41 @@ def csv_rowwriter(filename, mode):
 
 def main(
     video_path: str,
+    lang: str,
     caption_video_similarity_cutoff: float,
     caption_text_similarity_cutoff: int,
     outfile: str,
 ) -> None:
     video: cv2.VideoCapture = cv2.VideoCapture(video_path)
 
-    fps: float = video.get(cv2.CAP_PROP_FPS)
+    # fps: float = video.get(cv2.CAP_PROP_FPS)
 
-    frame_gen: FrameGenerator = frame_generator(video)
-    frame_pair_gen: FramePairGenerator = frame_pair_generator(frame_gen)
-    segments_gen: SegmentGenerator = segment_finder(
+    frames_total = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    frame_gen: Iterator[Frame] = iter(
+        tqdm(frame_generator(video), total=frames_total, unit="frame")
+    )
+    frame_pair_gen: Iterator[FramePair] = frame_pair_generator(frame_gen)
+    segments_gen: Iterator[Segment] = segment_finder(
         frame_pair_gen, caption_video_similarity_cutoff
     )
-    segments_with_text: SegmentWithTextGenerator = segments_add_text_generator(
-        segments_gen
+    segments_with_text: Iterator[SegmentWithText] = segments_add_text_generator(
+        segments_gen, lang
     )
-    segments_joined_text: SegmentWithTextsGenerator = segments_join_on_text(
+    segments_joined_text: Iterator[SegmentWithTexts] = segments_join_on_text(
         segments_with_text, caption_text_similarity_cutoff
     )
-    segments_has_text: SegmentWithTextsGenerator = (
+    segments_has_text: Iterator[SegmentWithTexts] = (
         (start, end, texts)
         for start, end, texts in segments_joined_text
         if texts != set([""])
     )
-    segments_no_short: SegmentWithTextGenerator = (
+    segments_no_short: Iterator[SegmentWithTexts] = (
         (start, end, texts)
         for start, end, texts in segments_has_text
         if end - start > 3
     )
-    segments_average_text: SegmentWithTextGenerator = (
+    segments_average_text: Iterator[SegmentWithText] = (
         (start, end, texts_average(texts)) for start, end, texts in segments_no_short
     )
     segments_out = segments_average_text
@@ -213,7 +214,7 @@ def main(
         writerow(SegmentRawText._fields)
 
     for segment_start_frame, segment_end_frame, text in segments_out:
-        segment = SegmentRawText(segment_start_frame, segment_end_frame, text)
+        segment = SegmentRawText(str(segment_start_frame), str(segment_end_frame), text)
         with csv_rowwriter(outfile, "a") as writerow:
             writerow(segment)
 
@@ -221,6 +222,7 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="find segments in easy-language video")
     parser.add_argument("video_path", type=str, help="path to the video file")
+    parser.add_argument("language", type=str, help="language to do ocr with")
     parser.add_argument(
         "--caption-video-similarity-cutoff",
         type=float,
@@ -243,14 +245,18 @@ if __name__ == "__main__":
         "--outfile",
         "-o",
         type=str,
-        default="segments_raw.csv",
+        default="20_segments_raw.csv",
         help="path to the output file",
     )
 
     args = parser.parse_args()
 
+    # easy-language videos translations are always english
+    language = f"{args.language}+eng"
+
     main(
         args.video_path,
+        language,
         args.caption_video_similarity_cutoff,
         args.caption_text_similarity_cutoff,
         args.outfile,

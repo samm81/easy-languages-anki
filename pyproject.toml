@@ -1,23 +1,38 @@
-[tool.poetry]
-name = "easy-polish"
+[project]
+name = "easy-languages-anki"
 version = "0.1.0"
-description = "easy-polish to anki"
-authors = ["samm81 <samwmaynard@gmail.com>"]
+description = "easy-languages youtube channels to anki"
+authors = [
+    {name = "samm81", email = "samwmaynard@gmail.com"},
+]
+dependencies = [
+    "numpy~=1.0",
+    "opencv-python~=4.0",
+    "pytesseract>=0.3.13",
+    "scikit-image~=0.0",
+    "pillow~=10.0",
+    "brain-brew~=0.3",
+    "youtube-dl @ git+https://github.com/ytdl-org/youtube-dl.git@c5098961b04ce83f4615f2a846c84f803b072639",
+    "tqdm>=4.66.5",
+]
+requires-python = ">=3.10"
 readme = "README.md"
 
-[tool.poetry.dependencies]
-python = ">= 3.10"
-numpy = "~1"
-opencv-python = "~4"
-pytesseract = "~0"
-scikit-image = "~0"
-youtube_dl = { git = "https://github.com/ytdl-org/youtube-dl.git", branch = "master" }
-pillow = "~10"
-brain-brew = "~0.3"
+[tool.pdm]
+distribution = false
 
-[tool.poetry.group.dev.dependencies]
-black = "~23"
+[tool.pdm.build]
+includes = []
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.pdm.dev-dependencies]
+dev = [
+    "ruff>=0.7.0",
+]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+strictListInference = true
+strictDictionaryInference = true
+strictSetInference = true
+deprecateTypingAliases = true
+enableReachabilityAnalysis = true

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# unfinished and experimental
+
 import argparse
 import csv
 from contextlib import contextmanager

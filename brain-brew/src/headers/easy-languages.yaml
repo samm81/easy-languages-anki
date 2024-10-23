@@ -1,0 +1,68 @@
+crowdanki_uuid: df4a5820-9126-11ef-a50e-3988d6b51992
+deck_config_uuid: eba95e01-3a76-11eb-aca8-34028677d5d5
+deck_configurations:
+- __type__: DeckConfig
+  answerAction: 0
+  autoplay: true
+  buryInterdayLearning: false
+  crowdanki_uuid: eba95e01-3a76-11eb-aca8-34028677d5d5
+  desiredRetention: 0.9
+  dyn: false
+  fsrsEnabled: false
+  fsrsWeights: []
+  ignoreRevlogsBeforeDate: '1970-01-01'
+  interdayLearningMix: 0
+  lapse:
+    delays:
+    - 10.0
+    leechAction: 0
+    leechFails: 4
+    minInt: 1
+    mult: 0.5
+  maxTaken: 60
+  name: slow burn
+  new:
+    bury: false
+    delays:
+    - 1.0
+    - 10.0
+    initialFactor: 2500
+    ints:
+    - 1
+    - 4
+    - 0
+    order: 1
+    perDay: 20
+    separate: true
+  newGatherPriority: 0
+  newMix: 0
+  newPerDayMinimum: 0
+  newSortOrder: 0
+  questionAction: 0
+  replayq: true
+  rev:
+    bury: true
+    ease4: 1.3
+    fuzz: 0.05
+    hardFactor: 1.2
+    ivlFct: 1.0
+    maxIvl: 36500
+    minSpace: 1
+    perDay: 30
+  reviewOrder: 0
+  secondsToShowAnswer: 0.0
+  secondsToShowQuestion: 0.0
+  sm2Retention: 0.9
+  stopTimerOnAnswer: false
+  timer: 0
+  waitForAudio: false
+  weightSearch: ''
+desc: ''
+dyn: 0
+extendNew: 0
+extendRev: 0
+name: 🌱::4 esp
+newLimit: null
+newLimitToday: null
+reviewLimit: null
+reviewLimitToday: null

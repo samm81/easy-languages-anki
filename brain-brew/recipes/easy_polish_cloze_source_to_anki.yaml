@@ -9,7 +9,7 @@
         file: src/note_models/easy-polish-cloze/easy-polish-cloze.yaml
     - headers_from_yaml_part:
         part_id: deck_headers
-        file: src/headers/header1.yaml
+        file: src/headers/easy-polish-cloze.yaml
     - notes_from_csvs:
         part_id: deck_notes
         save_to_file: null

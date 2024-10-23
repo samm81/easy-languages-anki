@@ -78,9 +78,12 @@ def segment_video(
         video_path, video_id, segment_start_timestamp, segment_end_timestamp, "webm"
     )
 
-    subprocess.call(
+    _completed_process = subprocess.run(
         [
             "ffmpeg",
+            "-nostdin",
+            "-loglevel",
+            "error",
             "-y",
             "-i",
             video_path,
@@ -99,7 +102,8 @@ def segment_video(
             "-c:a",  # audio codec
             "libopus",
             outfile,
-        ]
+        ],
+        check=True,
     )
 
     return outfile_name
@@ -115,9 +119,10 @@ def segment_audio(
         video_path, video_id, segment_start_timestamp, segment_end_timestamp, "aac"
     )
 
-    subprocess.call(
+    _completed_process = subprocess.run(
         [
             "ffmpeg",
+            "-nostdin",
             "-loglevel",
             "error",
             "-y",  # overwrite output file
@@ -131,7 +136,8 @@ def segment_audio(
             "-acodec",
             "copy",  # copy audio without re-encoding
             outfile,
-        ]
+        ],
+        check=True,
     )
 
     return outfile_name

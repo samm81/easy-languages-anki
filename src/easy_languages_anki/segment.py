@@ -34,7 +34,6 @@ class AnkiVideoFrameCardReqs(NamedTuple):
 
 
 class AnkiVideoFullCard(NamedTuple):
-    guid: str
     learning: str
     english: str
     video: str
@@ -47,7 +46,6 @@ class AnkiVideoFullCard(NamedTuple):
 
 
 class AnkiVideoFrameCard(NamedTuple):
-    guid: str
     learning: str
     english: str
     audio: str

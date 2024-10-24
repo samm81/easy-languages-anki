@@ -195,7 +195,6 @@ def anki_video_full_card_reqs_to_anki_video_full_cards(
     learning, english, video, video_title, video_url = anki_card_reqs
 
     return AnkiVideoFullCard(
-        guid="",
         learning=learning,
         english=english,
         video=video,
@@ -248,7 +247,6 @@ def anki_video_frame_card_reqs_to_anki_video_frame_cards(
     learning, english, audio, frame, video_title, video_url = anki_card_reqs
 
     return AnkiVideoFrameCard(
-        guid="",
         learning=learning,
         english=english,
         audio=audio,

@@ -62,9 +62,9 @@ if __name__ == "__main__":
 
     workdir = args.out_dir / args.video_id
     video_out_dir = workdir
-    segments_raw_text_file = workdir / "pipeline_10_segments_raw.txt"
-    segments_cleaned_file = workdir / "pipeline_20_segments_cleaned.txt"
-    ankicards_file = workdir / "pipeline_30_ankicards.txt"
+    segments_raw_text_file = workdir / "pipeline_10_segments_raw.csv"
+    segments_cleaned_file = workdir / "pipeline_20_segments_cleaned.csv"
+    ankicards_file = workdir / "pipeline_30_ankicards.csv"
 
     workdir.mkdir(parents=True, exist_ok=True)
 

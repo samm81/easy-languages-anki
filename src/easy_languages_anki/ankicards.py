@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
-from contextlib import contextmanager
 import csv
 import os
 import subprocess
 import configparser
+from contextlib import contextmanager
 from collections.abc import Iterable
 
 import cv2
@@ -167,11 +166,17 @@ def segment_frame(
 
 
 def segment_to_anki_video_full_card_reqs(
-    segment: Segment, video_path: str, video_id: str, video_title: str, video_url: str
+    segment: Segment,
+    video_path: str,
+    video_id: str,
+    video_title: str,
+    video_url: str,
+    fps: float,
 ) -> AnkiVideoFullCardReqs:
-    start_frame, end_frame, learning, english = segment
+    start_frame_s, end_frame_s, learning, english = segment
+    start_frame, end_frame = int(start_frame_s), int(end_frame_s)
 
-    start_timestamp, end_timestamp = int(start_frame) / FPS, int(end_frame) / FPS
+    start_timestamp, end_timestamp = start_frame / fps, end_frame / fps
 
     video_name = segment_video(
         video_path,
@@ -214,10 +219,12 @@ def segment_to_anki_video_frame_card_reqs(
     video_id: str,
     video_title: str,
     video_url: str,
+    fps: float,
 ) -> AnkiVideoFrameCardReqs:
-    start_frame, end_frame, learning, english = segment
+    start_frame_s, end_frame_s, learning, english = segment
+    start_frame, end_frame = int(start_frame_s), int(end_frame_s)
 
-    start_timestamp, end_timestamp = int(start_frame) / FPS, int(end_frame) / FPS
+    start_timestamp, end_timestamp = start_frame / fps, end_frame / fps
 
     audio_name = segment_audio(
         video_path,
@@ -226,7 +233,7 @@ def segment_to_anki_video_frame_card_reqs(
         end_timestamp,
     )
 
-    mid_frame = (int(start_frame) + int(end_frame)) // 2
+    mid_frame = (start_frame + end_frame) // 2
     frame_name = segment_frame(
         video, mid_frame, video_path, video_id, start_timestamp, end_timestamp
     )
@@ -267,9 +274,12 @@ def segments_to_video_cards(
 
     segments = segments_from_csv(input_file)
 
+    video = cv2.VideoCapture(video_path)
+    fps = video.get(cv2.CAP_PROP_FPS)
+
     anki_card_reqs = (
         segment_to_anki_video_full_card_reqs(
-            segment, video_path, video_id, video_title, video_url
+            segment, video_path, video_id, video_title, video_url, fps
         )
         for segment in segments
     )
@@ -281,8 +291,8 @@ def segments_to_video_cards(
     with csv_rowwriter(output_file, "w") as writerow:
         writerow(AnkiVideoFullCard._fields)
 
-    for anki_card in anki_cards:
-        with csv_rowwriter(output_file, "a") as writerow:
+    with csv_rowwriter(output_file, "a") as writerow:
+        for anki_card in anki_cards:
             writerow(anki_card)
 
 
@@ -297,9 +307,11 @@ def segments_to_frame_cards(
     segments = segments_from_csv(input_file)
 
     video = cv2.VideoCapture(video_path)
+    fps = video.get(cv2.CAP_PROP_FPS)
+
     anki_card_reqs = (
         segment_to_anki_video_frame_card_reqs(
-            segment, video, video_path, video_id, video_title, video_url
+            segment, video, video_path, video_id, video_title, video_url, fps
         )
         for segment in segments
     )
@@ -313,4 +325,5 @@ def segments_to_frame_cards(
 
     for anki_card in anki_cards:
         with csv_rowwriter(output_file, "a") as writerow:
+            # raise RuntimeError("have to fix audio and frame field")
             writerow(anki_card)

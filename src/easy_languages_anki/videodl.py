@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import configparser
 import youtube_dl
 from pathlib import Path

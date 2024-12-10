@@ -1,4 +1,7 @@
+import csv
+from collections.abc import Iterable
 from typing import NamedTuple
+from pathlib import Path
 
 # all types are `str` because we're often reading these out of `csv` files
 
@@ -53,3 +56,31 @@ class AnkiVideoFrameCard(NamedTuple):
     video_title: str
     video_url: str
     tags: str
+
+
+def anki_video_frame_cards_from_csv(csv_path: Path) -> Iterable[AnkiVideoFrameCard]:
+    with open(csv_path, mode="r", newline="") as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        assert header == [*AnkiVideoFrameCard._fields]
+        yield from (AnkiVideoFrameCard._make(row) for row in reader)
+
+
+def anki_video_frame_cards_to_csv(
+    csv_path: Path, cards: Iterable[AnkiVideoFrameCard]
+) -> None:
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(AnkiVideoFrameCard._fields)
+        for learning, english, audio, frame, video_title, video_url, tags in cards:
+            writer.writerow(
+                (
+                    learning,
+                    english,
+                    f"[sound:{audio}]",
+                    f"<img src='{frame}'>",
+                    video_title,
+                    video_url,
+                    tags,
+                )
+            )

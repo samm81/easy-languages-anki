@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import csv
 from contextlib import contextmanager
 from collections.abc import Generator, Iterator

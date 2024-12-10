@@ -14,6 +14,8 @@ dependencies = [
     "brain-brew~=0.3",
     "youtube-dl @ git+https://github.com/ytdl-org/youtube-dl.git@c5098961b04ce83f4615f2a846c84f803b072639",
     "tqdm>=4.66.5",
+    "spacy>=3.7.5",
+    "pip>=24.2",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

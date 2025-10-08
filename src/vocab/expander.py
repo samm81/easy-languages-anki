@@ -1,5 +1,5 @@
-from itertools import groupby
 from collections.abc import Iterable, Iterator
+from itertools import groupby
 
 from easy_languages_anki.segment import AnkiVideoFrameCard
 from vocab import vocab

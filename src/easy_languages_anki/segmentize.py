@@ -1,6 +1,6 @@
 import csv
-from contextlib import contextmanager
 from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 
 import cv2
 import numpy as np

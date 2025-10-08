@@ -4,8 +4,8 @@
 
 import argparse
 import csv
-from contextlib import contextmanager
 from collections.abc import Iterable
+from contextlib import contextmanager
 
 from segment import SegmentRawText, SegmentRawVideo
 

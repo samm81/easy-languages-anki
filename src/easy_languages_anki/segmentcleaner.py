@@ -1,9 +1,9 @@
 import csv
+from collections.abc import Callable, Iterable
 from contextlib import contextmanager
-from collections.abc import Iterable, Callable
 
-from .segment import SegmentRawText, Segment
 from .editor import drop_user_into_editor
+from .segment import Segment, SegmentRawText
 
 
 @contextmanager

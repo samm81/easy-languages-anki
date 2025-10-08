@@ -1,7 +1,7 @@
 import csv
 from collections.abc import Iterable
-from typing import NamedTuple
 from pathlib import Path
+from typing import NamedTuple
 
 # all types are `str` because we're often reading these out of `csv` files
 

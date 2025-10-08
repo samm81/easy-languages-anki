@@ -1,6 +1,7 @@
 import configparser
-import youtube_dl
 from pathlib import Path
+
+import youtube_dl
 
 
 def download_youtube(youtube_id: str, out_dir: Path) -> tuple[Path, Path]:

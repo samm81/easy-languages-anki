@@ -4,8 +4,8 @@ from pathlib import Path
 
 import anki
 from anki.parser import AnkiNoteEasyLanguages
-from vocab import vocab, expander
 from easy_languages_anki import segment
+from vocab import expander, vocab
 
 
 def main(notes_csv_anki_export: Path, notes_csv_easy_language: Path):

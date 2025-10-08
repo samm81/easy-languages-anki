@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import csv
 import sys
-from contextlib import contextmanager
 from collections.abc import Iterable
+from contextlib import contextmanager
 
 from easy_languages_anki.segment import AnkiVideoFrameCard
 

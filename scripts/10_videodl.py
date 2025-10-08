@@ -4,7 +4,6 @@ from pathlib import Path
 
 from easy_languages_anki import videodl
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("video_id", help="id of youtube video")

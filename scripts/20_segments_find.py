@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 
-from easy_languages_anki import segmentize, config
+from easy_languages_anki import config, segmentize
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="find segments in easy-language video")

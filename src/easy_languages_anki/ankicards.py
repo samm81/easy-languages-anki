@@ -1,20 +1,15 @@
+import configparser
 import csv
 import os
 import subprocess
-import configparser
-from contextlib import contextmanager
 from collections.abc import Iterable
+from contextlib import contextmanager
 
 import cv2
 from tqdm import tqdm
 
-from .segment import (
-    Segment,
-    AnkiVideoFullCardReqs,
-    AnkiVideoFullCard,
-    AnkiVideoFrameCardReqs,
-    AnkiVideoFrameCard,
-)
+from .segment import (AnkiVideoFrameCard, AnkiVideoFrameCardReqs,
+                      AnkiVideoFullCard, AnkiVideoFullCardReqs, Segment)
 
 FPS = 30
 

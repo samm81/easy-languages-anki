@@ -9,15 +9,15 @@ type Vocab = set[str]
 
 
 def from_string(text: str) -> Vocab:
-    return set(
+    return {
         token.lemma_
         for token in nlp(text.lower())
         if not token.is_punct and not token.is_space
-    )
+    }
 
 
 def from_strings(texts: Iterable[str]) -> Vocab:
-    return set(word for text in texts for word in from_string(text))
+    return {word for text in texts for word in from_string(text)}
 
 
 if __name__ == "__main__":

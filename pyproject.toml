@@ -33,3 +33,25 @@ strictDictionaryInference = true
 strictSetInference = true
 deprecateTypingAliases = true
 enableReachabilityAnalysis = true
+
+[tool.ruff]
+unsafe-fixes = true  # allow potentially behavior-changing auto-fixes
+
+[tool.ruff.lint]
+select = [
+    "E", # Style errors (PEP8)
+    "F", # Pyflakes (unused vars, imports, etc.)
+    "I", # isort (import sorting)
+    "B", # flake8-bugbear (bug-prone code)
+    "UP", # pyupgrade (modernize syntax)
+    "N", # pep8-naming (naming conventions)
+    "SIM",# simplify (unnecessary constructs)
+    "C4", # comprehensions (cleaner comprehensions)
+    "PERF", # performance (avoid inefficient patterns)
+    "PL", # pylint (selected useful pylint rules)
+    "RUF", # Ruff-specific improvements
+    "ERA", # eradicate
+    "FAST", # fastapi
+    "A", # flake8-builtins
+]
+

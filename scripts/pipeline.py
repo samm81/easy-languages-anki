@@ -3,8 +3,7 @@ import argparse
 from enum import IntEnum, unique
 from pathlib import Path
 
-from easy_languages_anki import (ankicards, config, segmentcleaner, segmentize,
-                                 videodl)
+from easy_languages_anki import ankicards, config, segmentcleaner, segmentize, videodl
 
 
 def pipeline_video_download(video_id: str, video_out_dir: Path):

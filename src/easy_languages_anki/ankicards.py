@@ -26,7 +26,7 @@ def csv_rowwriter(filename, mode):
 
 
 def csv_rows(filename):
-    with open(filename, "r", newline="") as f:
+    with open(filename, newline="") as f:
         reader = csv.reader(f)
         header = next(reader)
         assert header == [*Segment._fields]

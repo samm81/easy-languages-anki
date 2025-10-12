@@ -63,7 +63,7 @@ class AnkiVideoFrameCard(NamedTuple):
 
 
 def anki_video_frame_cards_from_csv(csv_path: Path) -> Iterable[AnkiVideoFrameCard]:
-    with open(csv_path, mode="r", newline="") as f:
+    with open(csv_path, newline="") as f:
         reader = csv.reader(f)
         header = next(reader)
         assert header == [*AnkiVideoFrameCard._fields]

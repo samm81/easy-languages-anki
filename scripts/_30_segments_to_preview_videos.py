@@ -17,7 +17,7 @@ def csv_rowwriter(filename, mode):
 
 
 def csv_rows(filename):
-    with open(filename, "r", newline="") as f:
+    with open(filename, newline="") as f:
         reader = csv.reader(f)
         header = next(reader)
         assert header == [*SegmentRawText._fields]
@@ -36,7 +36,7 @@ def segment_raw_text_to_segment_raw_video(
 
 
 def main(input_file, output_file):
-    segments_raw = segments_raw_from_csv(input_file)
+    _segments_raw = segments_raw_from_csv(input_file)
 
     with csv_rowwriter(output_file, "w") as writerow:
         writerow(SegmentRawVideo._fields)

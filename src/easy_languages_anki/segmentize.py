@@ -90,7 +90,7 @@ def segments_join_on_text(
     segment_prev: SegmentWithTexts = (
         segment_start_start,
         segment_start_end,
-        set([segment_start_text]),
+        {segment_start_text},
     )
     for segment in segments:
         # print("segment_prev", segment_prev)
@@ -105,13 +105,13 @@ def segments_join_on_text(
             segments_merged = (
                 segment_prev_start,
                 segment_end,
-                segment_prev_texts | set([segment_text]),
+                segment_prev_texts | {segment_text},
             )
             segment = segments_merged
             # print("similar merged", segment)
         else:
             yield segment_prev
-            segment = (segment_start, segment_end, set([segment_text]))
+            segment = (segment_start, segment_end, {segment_text})
 
         segment_prev = segment
 
@@ -196,7 +196,7 @@ def segmentize(
     segments_has_text: Iterator[SegmentWithTexts] = (
         (start, end, texts)
         for start, end, texts in segments_joined_text
-        if texts != set([""])
+        if texts != {""}
     )
     segments_no_short: Iterator[SegmentWithTexts] = (
         (start, end, texts)

@@ -13,7 +13,7 @@ def csv_rowwriter(filename, mode):
 
 
 def csv_rows(filename):
-    with open(filename, "r", newline="") as f:
+    with open(filename, newline="") as f:
         reader = csv.reader(f)
         header = next(reader)
         assert header == [*SegmentRawText._fields]
@@ -87,7 +87,7 @@ def segment_raw_handle_interactive(
         return segment_raw_text_to_segment(segment)
     if command == "f":
         return fixup_segments(segment_prev, segment_curr)
-    elif command == "d" or command == "o":
+    elif command in {"d", "o"}:
         print("discarded")
         return segment_prev
     elif command == "e":

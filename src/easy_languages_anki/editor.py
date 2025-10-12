@@ -11,7 +11,7 @@ def drop_user_into_editor(text):
         editor = os.environ.get("EDITOR", "vim")
         subprocess.call([editor, f.name])
 
-        f = open(f.name, "r")
+        f = open(f.name)
         edited_text = f.read()
         f.close()
         os.unlink(f.name)

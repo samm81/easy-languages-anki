@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import re
-import warnings
 from pathlib import Path
 
 import anki
@@ -27,7 +25,7 @@ def main(notes_csv_anki_export: Path, notes_csv_easy_language: Path):
     cards = list(cards_)
     print(f"{len(cards)=}")
 
-    already_know_card_ids = set(note.id_anki_card for note in notes_anki)
+    already_know_card_ids = {note.id_anki_card for note in notes_anki}
     print(f"{len(already_know_card_ids)=}")
 
     cards_not_already_know = [

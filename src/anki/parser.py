@@ -29,7 +29,7 @@ def notes_from_io(notetype: type[NoteType], f: TextIO) -> Iterable[NoteType]:
 def notes_from_notes_txt(
     notetype: type[NoteType], note_txt_path: Path
 ) -> Iterable[NoteType]:
-    with open(note_txt_path, "r", newline="") as f:
+    with open(note_txt_path, newline="") as f:
         yield from notes_from_io(notetype, f)
 
 

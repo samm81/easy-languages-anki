@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import NamedTuple, TextIO, TypeVar
 
 
-def notes_csv(f: TextIO) -> Iterable[Iterable[str]]:
+def notes_csv(f: TextIO) -> Iterable[list[str]]:
     next(f)  # separator:tab
     next(f)  # html:false
     reader = csv.reader(f, delimiter="\t")
@@ -16,7 +16,14 @@ NoteType = TypeVar("NoteType", bound=NamedTuple)
 
 
 def notes_from_io(notetype: type[NoteType], f: TextIO) -> Iterable[NoteType]:
-    return (notetype._make(row) for row in notes_csv(f))
+    return (
+        notetype._make(
+            row
+            if len(row) == len(notetype._fields)
+            else row + [""] * (len(notetype._fields) - len(row))
+        )
+        for row in notes_csv(f)
+    )
 
 
 def notes_from_notes_txt(
@@ -35,7 +42,9 @@ class AnkiNoteEasyLanguages(NamedTuple):
     frame: str
     video_title: str
     video_url: str
+    id_anki_card: str
     lang: str
+    with_production_card: str
 
 
 if __name__ == "__main__":

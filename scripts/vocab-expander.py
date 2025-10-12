@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import argparse
+import re
+import warnings
 from pathlib import Path
 
 import anki
@@ -9,9 +11,11 @@ from vocab import expander, vocab
 
 
 def main(notes_csv_anki_export: Path, notes_csv_easy_language: Path):
-    notes_anki = anki.parser.notes_from_notes_txt(
+    notes_anki_gen = anki.parser.notes_from_notes_txt(
         AnkiNoteEasyLanguages, notes_csv_anki_export
     )
+    notes_anki = list(notes_anki_gen)
+
     vocab_known = vocab.from_strings(note.target for note in notes_anki)
     notes_easy_language = segment.anki_video_frame_cards_from_csv(
         notes_csv_easy_language
@@ -19,8 +23,19 @@ def main(notes_csv_anki_export: Path, notes_csv_easy_language: Path):
     expand_diff = expander.ankicards_diff_from_known_vocab(
         vocab_known, notes_easy_language
     )
-    diff_size, cards = next(expand_diff)
-    cards_by_len = sorted(cards, key=lambda card: len(card.learning))
+    diff_size, cards_ = next(expand_diff)
+    cards = list(cards_)
+    print(f"{len(cards)=}")
+
+    already_know_card_ids = set(note.id_anki_card for note in notes_anki)
+    print(f"{len(already_know_card_ids)=}")
+
+    cards_not_already_know = [
+        card for card in cards if card.id_anki_card not in already_know_card_ids
+    ]
+    print(f"{len(cards_not_already_know)=}")
+
+    cards_by_len = sorted(cards_not_already_know, key=lambda card: len(card.learning))
 
     segment.anki_video_frame_cards_to_csv(
         Path(f"./expander-cards-{diff_size}.csv"), cards_by_len

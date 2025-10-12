@@ -25,6 +25,7 @@ class AnkiVideoFullCardReqs(NamedTuple):
     video: str
     video_title: str
     video_url: str
+    id_anki_card: str
 
 
 class AnkiVideoFrameCardReqs(NamedTuple):
@@ -34,6 +35,7 @@ class AnkiVideoFrameCardReqs(NamedTuple):
     frame: str
     video_title: str
     video_url: str
+    id_anki_card: str
 
 
 class AnkiVideoFullCard(NamedTuple):
@@ -45,6 +47,7 @@ class AnkiVideoFullCard(NamedTuple):
     video_url: str
     cloze_listen_hack: str
     priority: str
+    id_anki_card: str
     tags: str
 
 
@@ -55,6 +58,7 @@ class AnkiVideoFrameCard(NamedTuple):
     frame: str
     video_title: str
     video_url: str
+    id_anki_card: str
     tags: str
 
 
@@ -72,7 +76,16 @@ def anki_video_frame_cards_to_csv(
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(AnkiVideoFrameCard._fields)
-        for learning, english, audio, frame, video_title, video_url, tags in cards:
+        for (
+            learning,
+            english,
+            audio,
+            frame,
+            video_title,
+            video_url,
+            id_anki_card,
+            tags,
+        ) in cards:
             writer.writerow(
                 (
                     learning,
@@ -81,6 +94,7 @@ def anki_video_frame_cards_to_csv(
                     f"<img src='{frame}'>",
                     video_title,
                     video_url,
+                    id_anki_card,
                     tags,
                 )
             )

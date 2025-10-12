@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from pathlib import Path
+from typing import Optional
 
 import anki
 from anki.parser import AnkiNoteEasyLanguages
@@ -8,7 +9,11 @@ from easy_languages_anki import segment
 from vocab import expander, vocab
 
 
-def main(notes_csv_anki_export: Path, notes_csv_easy_language: Path):
+def main(
+    notes_csv_anki_export: Path,
+    notes_csv_easy_language: Path,
+    know_vocab_list: Optional[Path],
+):
     notes_anki_gen = anki.parser.notes_from_notes_txt(
         AnkiNoteEasyLanguages, notes_csv_anki_export
     )
@@ -44,6 +49,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("notes_csv_anki_export", type=Path)
     parser.add_argument("notes_csv_easy_language", type=Path)
+    parser.add_argument(
+        "--known_vocab_list",
+        type=Path,
+        required=False,
+        help="Optional path to known vocabulary list",
+    )
     args = parser.parse_args()
 
-    main(args.notes_csv_anki_export, args.notes_csv_easy_language)
+    main(
+        args.notes_csv_anki_export, args.notes_csv_easy_language, args.known_vocab_list
+    )

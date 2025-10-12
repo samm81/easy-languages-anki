@@ -18,6 +18,7 @@ RESET=$(shell tput -Txterm sgr0)
 # first command is what get runs by default
 
 .PHONY: setup
+setup:
 	python -m spacy download es_core_news_md
 
 .PHONY: lint/check
@@ -29,4 +30,5 @@ lint/fix:
 	ruff fix
 
 .PHONY: vocab-expander
+vocab-expander:
 	env PYTHONPATH="./src:$PYTHONPATH" ./scripts/vocab-expander.py

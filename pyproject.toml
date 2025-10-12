@@ -20,15 +20,10 @@ dependencies = [
 requires-python = ">=3.12,<3.13"
 readme = "README.md"
 
-[tool.pdm]
-distribution = false
-
-[tool.pdm.build]
-includes = []
-
-[tool.pdm.dev-dependencies]
+[dependency-groups]
 dev = [
-    "ruff>=0.7.0",
+    "pyright>=1.1.406",
+    "ruff>=0.14.0",
 ]
 
 [tool.pyright]

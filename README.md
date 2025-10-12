@@ -26,7 +26,7 @@ updating a deck:
 1. (maybe) `rm -r brain-brew/src/`
 1. in `brain-brew/`: `brainbrew run recipies/anki_to_source.yml`
 1. `cat` new cards onto `brain-brew/src/data` csv file, copy media files to `brain-brew/src/media`
-1. in `brain-brew/` `pdm run brainbrew run recipies/source_to_anki.yml`
+1. in `brain-brew/` `brainbrew run recipies/source_to_anki.yml`
 
 theoretically should work!
 

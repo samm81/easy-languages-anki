@@ -20,10 +20,13 @@ RESET=$(shell tput -Txterm sgr0)
 .PHONY: setup
 	python -m spacy download es_core_news_md
 
-.PHONY: lint-fix
-lint-fix:
-	black src/ scripts/
-	isort src/ scripts/
+.PHONY: lint/check
+lint/check:
+	ruff check
+
+.PHONY: lint/fix
+lint/fix:
+	ruff fix
 
 .PHONY: vocab-expander
 	env PYTHONPATH="./src:$PYTHONPATH" ./scripts/vocab-expander.py

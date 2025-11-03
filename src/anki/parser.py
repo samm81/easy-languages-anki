@@ -45,6 +45,7 @@ class AnkiNoteEasyLanguages(NamedTuple):
     id_anki_card: str
     lang: str
     with_production_card: str
+    tags: str
 
 
 if __name__ == "__main__":
